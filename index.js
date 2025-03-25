@@ -5,29 +5,39 @@ const ngrok = require("ngrok");
 const qrcode = require('qrcode-terminal');
 
 (async function startTunnel() {
-  console.log("🚀 Starting Metro Bundler...");
-  const metroProcess = spawn("npx", ["react-native", "start"], { stdio: "inherit" });
+  try {
+    console.log("🚀 Starting Metro Bundler...");
+    const metroProcess = spawn("npx", ["react-native", "start"], { stdio: "inherit" });
 
-  // Wait a bit for Metro to start
-  await new Promise(resolve => setTimeout(resolve, 3000));
+    // Wait a bit for Metro to start
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-  // Start ngrok tunnel
-  console.log("🌍 Creating ngrok tunnel...");
-  const url = await ngrok.connect({ proto: "http", addr: 8081 });
+    // Start ngrok tunnel with explicit configuration
+    console.log("🌍 Creating ngrok tunnel...");
+    const url = await ngrok.connect({
+      proto: "http",
+      addr: 8081,
+      authtoken: process.env.NGROK_AUTH_TOKEN, // Add your ngrok auth token
+      configPath: null // Prevent looking for config file
+    });
 
-  console.log(`🔗 Tunnel URL: ${url}`);
-  console.log("📱 Scan this QR code to open the app:");
-  qrcode.generate(url, { small: true });
-  console.log("📡 Use this URL in your React Native app for debugging.");
+    console.log(`🔗 Tunnel URL: ${url}`);
+    console.log("📱 Scan this QR code to open the app:");
+    qrcode.generate(url, { small: true });
+    console.log("📡 Use this URL in your React Native app for debugging.");
 
-  // Handle process exit
-  process.on("exit", async () => {
-    console.log("🛑 Stopping ngrok...");
-    await ngrok.disconnect();
-    await ngrok.kill();
-  });
+    // Handle process exit
+    process.on("exit", async () => {
+      console.log("🛑 Stopping ngrok...");
+      await ngrok.disconnect();
+      await ngrok.kill();
+    });
 
-  process.on("SIGINT", async () => {
-    process.exit();
-  });
+    process.on("SIGINT", async () => {
+      process.exit();
+    });
+  } catch (error) {
+    console.error("❌ Error starting tunnel:", error.message);
+    process.exit(1);
+  }
 })();
