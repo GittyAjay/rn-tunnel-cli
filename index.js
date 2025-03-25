@@ -3,6 +3,29 @@
 const { spawn } = require("cross-spawn");
 const os = require('os');
 const qrcode = require('qrcode-terminal');
+const net = require('net');
+
+// Function to find available port
+async function findAvailablePort(startPort) {
+  const isPortAvailable = (port) => {
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      server.listen(port, () => {
+        server.close();
+        resolve(true);
+      });
+      server.on('error', () => {
+        resolve(false);
+      });
+    });
+  };
+
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+  }
+  return port;
+}
 
 function getLocalIpAddress() {
   const interfaces = os.networkInterfaces();
@@ -19,11 +42,11 @@ function getLocalIpAddress() {
 
 (async function startLocal() {
   try {
-    const port = 8081;
+    const port = await findAvailablePort(8081);
     const localIp = getLocalIpAddress();
     const url = `http://${localIp}:${port}`;
     
-    console.log(`🔍 Using port: ${port}`);
+    console.log(`🔍 Using available port: ${port}`);
     console.log(`📱 Your local IP is: ${localIp}`);
     console.log(`🔗 Use this URL in your React Native app: ${url}`);
     
