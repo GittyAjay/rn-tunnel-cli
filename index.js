@@ -2,6 +2,7 @@
 
 const { spawn } = require("cross-spawn");
 const ngrok = require("ngrok");
+const qrcode = require('qrcode-terminal');
 
 (async function startTunnel() {
   console.log("🚀 Starting Metro Bundler...");
@@ -15,6 +16,8 @@ const ngrok = require("ngrok");
   const url = await ngrok.connect({ proto: "http", addr: 8081 });
 
   console.log(`🔗 Tunnel URL: ${url}`);
+  console.log("📱 Scan this QR code to open the app:");
+  qrcode.generate(url, { small: true });
   console.log("📡 Use this URL in your React Native app for debugging.");
 
   // Handle process exit
